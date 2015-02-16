@@ -3,6 +3,8 @@ package de.uni_postdam.hpi.jerasure;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.*;
 
@@ -106,20 +108,24 @@ public class Buffer implements Iterable<Byte> {
 		};
 	}
 
-	public int readFromStream(FileInputStream fis) throws IOException {
+	public int readFromStream(InputStream fis) throws IOException {
 		return fis.read(this.data);
 	}
 
-	public int readFromStream(FileInputStream fis, int start, int len) throws IOException {
+	public int readFromStream(InputStream fis, int start, int len) throws IOException {
 		return fis.read(this.data, start, len);
 	}
 
-	public void writeToStream(FileOutputStream destenation, int offset, int len) throws IOException {
-		destenation.write(this.data, getStart() + offset, len);
-	}
+    public void writeToStream(FileOutputStream destination, int offset, int len) throws IOException {
+        destination.write(this.data, getStart() + offset, len);
+    }
 
-	public void writeToStream(RandomAccessFile destenation, int len) throws IOException {
-		destenation.write(this.data, this.start, len);
+    public void writeToStream(OutputStream destination, int offset, int len) throws IOException {
+        destination.write(this.data, getStart() + offset, len);
+    }
+
+	public void writeToStream(RandomAccessFile destination, int len) throws IOException {
+		destination.write(this.data, this.start, len);
 	}
 	
 	public void xor(int idx, byte otherValue) {

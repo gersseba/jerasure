@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import de.uni_postdam.hpi.cauchy.Cauchy;
 import de.uni_postdam.hpi.matrix.*;
@@ -76,7 +77,65 @@ public class Encoder {
 		codingBlockSize = CalcUtils.calcCodingBlockSize(m, w, packetSize);
 	}
 
+    public File[] encode(InputStream inputStream, File file) {
+        calcSizes(file.length());
+        FileOutputStream[] k_parts = null;
+        FileOutputStream[] m_parts = null;
 
+        try {
+            k_parts = FileUtils.createParts(file.getAbsolutePath(), "k", k);
+            m_parts = FileUtils.createParts(file.getAbsolutePath(), "m", m);
+            Buffer data = new Buffer(bufferSize);
+            Buffer coding = new Buffer(bufferSize / k * m);
+            int read = 0;
+            int readTotal = 0;
+            while ((read = read(inputStream, data.getData())) != -1) {
+                data.reset();
+                coding.reset();
+
+                performEncoding(data, coding);
+                if (read < bufferSize)
+                    performLastReadEncoding(data, coding, read);
+
+                data.setStart(0);
+                coding.setStart(0);
+
+                FileUtils.writeParts(data, coding, k_parts, m_parts, w, packetSize);
+
+                readTotal += read;
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                //fis.close();
+                FileUtils.close(k_parts);
+                FileUtils.close(m_parts);
+            } catch (Exception e) {
+				/* ignore */
+            }
+        }
+        File[] chunks = new File[k+m];
+        System.arraycopy(FileUtils.collectFiles(file.getAbsolutePath(),"k",k),0,chunks,0,k);
+        System.arraycopy(FileUtils.collectFiles(file.getAbsolutePath(),"m",m),0,chunks,k,m);
+        return chunks;
+    }
+
+    private int read(InputStream in, byte[] buf) throws IOException {
+        int read, offset = 0, leftToRead = buf.length, readTotal = -1;
+        while (leftToRead > 0 && (read = in.read(buf, offset, leftToRead)) > 0) {
+            if (readTotal == -1)
+                readTotal = 0;
+
+            leftToRead -= read;
+            offset += read;
+            readTotal += read;
+        }
+
+        return readTotal;
+    }
 	
 	public void encode(File file) {
 		if (!file.exists()) {

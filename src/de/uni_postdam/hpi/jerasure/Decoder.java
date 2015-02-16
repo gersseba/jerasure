@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -57,19 +58,33 @@ public class Decoder {
 				schedules, packetSize, w);
 	}
 
-	public void decode(long size) {
-		if (!isValid()) {
-			throw new RuntimeException(
-					"Not enough parts to decode the original!");
-		}
-		this.originalFileSize = size;
-		calcSizes();
-		if (!all_k_parts_exist()) {
-			generateSchedules();
-			restoreKParts();
-		}
-		decodeFromKParts();
-	}
+    public void decode(long size) {
+        if (!isValid()) {
+            throw new RuntimeException(
+                    "Not enough parts to decode the original!");
+        }
+        this.originalFileSize = size;
+        calcSizes();
+        if (!all_k_parts_exist()) {
+            generateSchedules();
+            restoreKParts();
+        }
+        decodeFromKParts();
+    }
+
+    public void decode(long size, OutputStream outputStream) {
+        if (!isValid()) {
+            throw new RuntimeException(
+                    "Not enough parts to decode the original!");
+        }
+        this.originalFileSize = size;
+        calcSizes();
+        if (!all_k_parts_exist()) {
+            generateSchedules();
+            restoreKParts();
+        }
+        decodeFromKParts(outputStream);
+    }
 
 	public byte[] decode(byte[] data, int packetSize) {
 		if (schedules == null) {
@@ -225,8 +240,36 @@ public class Decoder {
 		}
 	}
 
-	private void decodeFromKParts() {
+    private void decodeFromKParts(OutputStream outputStream) {
+        Buffer data = new Buffer(bufferSize);
+        SortedMap<Integer, FileInputStream> parts = null;
+        try {
+            parts = orderParts(k_parts, "k");
+            int bytesWritten = 0, read = 0;
+            while (bytesWritten < originalFileSize) {
+                read = FileUtils.readParts(data, parts, w, packetSize);
+                int bytesToWrite = (int) Math.min(data.size(), originalFileSize - bytesWritten);
+                data.writeToStream(outputStream, bytesWritten, bytesToWrite);
+                if(read == -1) break;
+                bytesWritten += bytesToWrite;
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+                closeStreams(parts);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
+	private void decodeFromKParts() {
 		RandomAccessFile f = null;
 		Buffer data = new Buffer(bufferSize);
 		SortedMap<Integer, FileInputStream> parts = null;
@@ -256,7 +299,6 @@ public class Decoder {
 				e.printStackTrace();
 			}
 		}
-
 	}
 
 	private SortedMap<Integer, FileInputStream> orderParts(File[] parts,
