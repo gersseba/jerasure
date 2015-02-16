@@ -1,12 +1,5 @@
 # jerasure
 
 
-This is a Java implementation of the erasure encoding algorithm based on https://github.com/tsuraan/Jerasure
-___
-### How to Deploy it on Sonatype Maven Repo
-
-original source:
-https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide#SonatypeOSSMavenRepositoryUsageGuide-2.Signup
-
-TODO
+This is a stream based implementation of the jerasure library by BloodyD. The aim is to be able to use java PipedStreams to reduce io operations.
 
