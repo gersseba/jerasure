@@ -77,8 +77,8 @@ public class Encoder {
 		codingBlockSize = CalcUtils.calcCodingBlockSize(m, w, packetSize);
 	}
 
-    public File[] encode(InputStream inputStream, File file) {
-        calcSizes(file.length());
+    public File[] encode(InputStream inputStream, File file, long size) {
+        calcSizes(size);
         FileOutputStream[] k_parts = null;
         FileOutputStream[] m_parts = null;
 
@@ -89,7 +89,7 @@ public class Encoder {
             Buffer coding = new Buffer(bufferSize / k * m);
             int read = 0;
             int readTotal = 0;
-            while ((read = data.readFromStream(inputStream)) >= 0) {
+            while ((read = read(inputStream, data.getData())) >= 0) {
                 data.reset();
                 coding.reset();
 
