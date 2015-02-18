@@ -89,7 +89,7 @@ public class Encoder {
             Buffer coding = new Buffer(bufferSize / k * m);
             int read = 0;
             int readTotal = 0;
-            while ((read = read(inputStream, data.getData())) != -1) {
+            while ((read = data.readFromStream(inputStream)) >= 0) {
                 data.reset();
                 coding.reset();
 

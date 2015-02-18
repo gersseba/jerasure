@@ -121,7 +121,7 @@ public class Buffer implements Iterable<Byte> {
     }
 
     public void writeToStream(OutputStream destination, int offset, int len) throws IOException {
-        destination.write(this.data, getStart() + offset, len);
+        destination.write(this.data, offset,len);
     }
 
 	public void writeToStream(RandomAccessFile destination, int len) throws IOException {
